@@ -6,9 +6,9 @@ The project proposes a novel decentralized application designed to address fair 
 
 ## Project Structure
 
-* **/chain**: Contains the Solidity smart contracts (`OracleQueue.sol`, `OracleVerifier.sol`), Hardhat configuration, and deployment scripts.
-* **/oracle**: Contains the off-chain Oracle node backend written in Go, including the custom OCR3 (Off-Chain Reporting) plugin and listener.
-* **/IpfsAgent**: Scripts and configurations for handling data storage and retrieval via IPFS.
+* **chain**: Contains the Solidity smart contracts (`OracleQueue.sol`, `OracleVerifier.sol`), Hardhat configuration, and deployment scripts.
+* **oracle**: Contains the off-chain Oracle node backend written in Go, including the custom OCR3 (Off-Chain Reporting) plugin and listener.
+* **IpfsAgent**: Scripts and configurations for handling data storage and retrieval via IPFS.
 * **docker-compose.yml**: Orchestrates the Docker containers for the oracle network and testing environment.
 
 ## Tech Stack
@@ -41,7 +41,7 @@ To run this project locally, ensure you have the following installed on your mac
 ---
 
 ## How to Run the Project locally 
-Thanks to the Docker orchestration, booting the entire ecosystem is higly automated. 
+Thanks to the Docker orchestration, booting the entire ecosystem is highly automated. 
 The docker-compose setup will:
 
 - Start the Hardhat local node
