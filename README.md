@@ -14,7 +14,7 @@ The project proposes a novel decentralized application designed to address fair 
 ## Tech Stack
 * **Blockchain/Smart Contracts:** Solidity, Hardhat, Ethers.js
 * **Oracle Infrastructure:** Chainlink DON, Go (Golang), Docker
-* **Decentralized Storage:** IPFS
+* **Decentralized Storage:** IPFS (kubo)
 
 ---
 
@@ -31,13 +31,16 @@ To run this project locally, ensure you have the following installed on your mac
 ## Installation & Setup
 
 1. **Clone the repository**
+```bash
     git clone https://github.com/FedeTome0/Don-Ocr3-thesis.git
     cd Don-Ocr3-thesis
+```
 2. **Install Smart Contract dependencies (Hardhat)**
+```bash
     cd chain
     npm install
     cd ..
-
+```
 ---
 
 ## How to Run the Project locally 
@@ -68,13 +71,13 @@ python model_service_v2.py
 ssh -L 50100:127.0.0.1:50100 tomelliniT@131.114.50.205
 ```
 
-Keep this terminal open to maintain the connection.
+Keep this terminal open to maintain the connection. Instead, you can use the ssh command and then work in that terminal. Go in `data/tomelliniT/oc3-thesis/alps-ai-master/model`. Run `source env/bin/activate` to activate the python environment and then you can proceed by starting the server.
 
 ---
 
 ## Step 2: Boot the Core Infrastructure
 
-Open a new terminal in the root directory of the project and run:
+Open a new terminal in the root directory (meanwhile start docker application) of the project and run:
 
 ```bash
 docker compose up --build
@@ -115,7 +118,7 @@ cd chain
 npx hardhat run scripts/modelCreatorApprove.js --network localhost
 ```
 
-This script simulates the model creator listening for OracleQueue request events.
+This script simulates the model creator listening for OracleQueue request events. Wait for it to be deployed and he starts listen to the events.
 
 ---
 
@@ -135,6 +138,7 @@ At this point:
 - Royalties are calculated
 
 You can monitor everything in the main Docker terminal.
+And to check the current result saved on-chain (in OracleVerifier), you can use the script verify.js to check the first ten numbers of the vector.
 
 ---
 
