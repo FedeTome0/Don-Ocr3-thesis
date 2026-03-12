@@ -25,14 +25,25 @@ FROM alpine:latest
 
 WORKDIR /root/
 
+# Install iproute2 to use tc command
+RUN apk add --no-cache iproute2
+
 COPY --from=builder /out/oracle /usr/local/bin/oracle
-#COPY --from=builder /out/queue /usr/local/bin/queue
 COPY --from=builder /out/checker /usr/local/bin/checker
 
 # Copy the script in the container and make it executable
 COPY wait-for-deploy.sh /usr/local/bin/wait-for-deploy.sh
 RUN chmod +x /usr/local/bin/wait-for-deploy.sh
 
+# Copy the network script in the container
+COPY setup_network.sh /usr/local/bin/setup_network.sh
+RUN chmod +x /usr/local/bin/setup_network.sh
+
 # This script is going to be executed every time the container starts
-ENTRYPOINT ["/usr/local/bin/wait-for-deploy.sh"]
+# It will be this script to call wait-for-deploy
+# Latency mode
+ENTRYPOINT ["/usr/local/bin/setup_network.sh"]
+# 0 Latency mode
+#ENTRYPOINT ["/usr/local/bin/wait-for-deploy.sh"]
+
 CMD ["oracle"]

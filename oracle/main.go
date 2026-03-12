@@ -2,39 +2,22 @@ package main
 
 import (
 	"context"
-//	"crypto/ecdsa"
-//	"crypto/ed25519"
-//	"crypto/sha256"
-//	"encoding/json"
-//	"errors"
 	"flag"
 	"fmt"
 	"log"
-//	"math/big"
-	"math/rand"
-//	"net"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
 
-//	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-//	gethtypes "github.com/ethereum/go-ethereum/core/types"
-//	"github.com/ethereum/go-ethereum/crypto"
-//	"github.com/ethereum/go-ethereum/ethclient"
 	shell "github.com/ipfs/go-ipfs-api"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/smartcontractkit/libocr/commontypes"
 	"github.com/smartcontractkit/libocr/networking"
 	"github.com/smartcontractkit/libocr/offchainreporting2plus"
-//	"github.com/smartcontractkit/libocr/offchainreporting2plus/chains/evmutil"
-//	"github.com/smartcontractkit/libocr/offchainreporting2plus/confighelper" 
-//	"github.com/smartcontractkit/libocr/offchainreporting2plus/ocr3confighelper"
-//	"github.com/smartcontractkit/libocr/offchainreporting2plus/ocr3types"
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
-//	"github.com/smartcontractkit/libocr/quorumhelper"
 	ragetypes "github.com/smartcontractkit/libocr/ragep2p/types"
 )
 
@@ -52,17 +35,19 @@ func runBootstrap(ctx context.Context, n, f int, seed int64, listen, announce st
 	_, oracles, err := deriveAllNodes(n, seed)
 	if err != nil {	return err }
 	
+	// Collect the Peer IDs of all active oracles to authorize them on the network
 	peerIDs := make([]string, 0, n)
 	for _, o := range oracles { 
 		peerIDs = append(peerIDs, o.PeerID) 
 	}
 	
-	// DNS Resolution: useful for Docker
+	// DNS Resolution: crucial for Docker container networking mapping
 	announceIP, err := resolveHostnamePortToIP(announce)
 	if err != nil {
 		return fmt.Errorf("Resolve bootstrap_announce %q: %w", announce, err)
 	}
 
+	// Deterministically derive the Bootstrapper's cryptographic identity
 	priv := deriveBootstrapPriv(seed)
 	pid, err := ragetypes.PeerIDFromPrivateKey(priv)
 	if err != nil {
@@ -91,16 +76,18 @@ func runBootstrap(ctx context.Context, n, f int, seed int64, listen, announce st
 	if err := bootstrapper.Start(); err != nil {
 		return err
 	}
+	// Ensure graceful resource teardown upon context cancellation
 	defer func() { _ = bootstrapper.Close() }()
 
+	// Block the main thread until the application context is canceled (e.g., SIGTERM)
 	fmt.Printf("Bootstrap peerId=%s listen=%s announce=%s configDigest=%s\n", pid.String(), listen, announceIP, cc.ConfigDigest.Hex())
 	<-ctx.Done()
 	return nil
 }
 
-// runOracle assembles and starts an OCR3 Oracle node.
-// It connects the Off-chain (IPFS, AI computation) with 
-// the On-Chain components (Smart contract),
+// runOracle handles the initialization and lifecycle of an active OCR3 Oracle node.
+// It sets up the persistent network connections, injects dependencies into the 
+// libocr core engine, and manages the execution of background asynchronous workers.
 func runOracle(ctx context.Context, id, n, f int, seed int64, bootAddr, listen, announce string) error {
 	// ==========================================
 	// 1. Environment Configuration & SECRETS
@@ -110,7 +97,7 @@ func runOracle(ctx context.Context, id, n, f int, seed int64, bootAddr, listen, 
 		log.Fatal("Critical Error: PRIVATE KEY variable not found. Check the docker-compose.yml")
 	}
 
-	// Remove eventual 0x prefix
+	// Strip the "0x" prefix if present to standardize the hex format
     privKeyHex = strings.TrimPrefix(privKeyHex, "0x")
 
 	// Retrieval of the smart contract addresses from .env
@@ -129,12 +116,13 @@ func runOracle(ctx context.Context, id, n, f int, seed int64, bootAddr, listen, 
 	// ==========================================
 	// 2. Off-Chain Infrastructure Boot
 	// ==========================================	
-	// Setup IPFS Shell
+	// Instantiate the IPFS Shell client for decentralized storage interaction
 	ipfsShell := shell.NewShell(ipfsUrl)
 	
-	// Start the listener asynchronous Event Listener
-	// This runs in a separate thread and populates the JobCache.
-	go startChainListener(ctx, rpc, queueAddressHex, ipfsShell)
+	// Spawn the asynchronous Event Listener in a dedicated goroutine.
+    // This decoupled architecture ensures that the blockchain subscription stream
+    // does not block the OCR consensus operations.
+	go startChainListener(ctx, rpc, verifierAddressHex, queueAddressHex, ipfsShell)
 
 	
 	// ==========================================
@@ -145,8 +133,7 @@ func runOracle(ctx context.Context, id, n, f int, seed int64, bootAddr, listen, 
 	bootIP, err := resolveHostnamePortToIP(bootAddr)
 	if err != nil { return err }
 
-
-	// Configdigest configuration
+	// Generate deterministic contract configuration and digest for the consensus
 	cc, digester, err := buildContractConfig(n, f, seed)
 	if err != nil { return err }
 
@@ -161,7 +148,7 @@ func runOracle(ctx context.Context, id, n, f int, seed int64, bootAddr, listen, 
 		PrivKey: 				me.offKR.offPriv, 
 		Logger: 				quietLogger{log.New(os.Stdout, "", 0)},
 		V2ListenAddresses: 		[]string{listen}, 
-		V2AnnounceAddresses: 	[]string{announceIP}, // Use of announceIP
+		V2AnnounceAddresses: 	[]string{announceIP}, 
 		V2EndpointConfig: networking.EndpointConfigV2{
 			IncomingMessageBufferSize: 100,
 			OutgoingMessageBufferSize: 50,
@@ -176,31 +163,37 @@ func runOracle(ctx context.Context, id, n, f int, seed int64, bootAddr, listen, 
 	bootPID, _ := ragetypes.PeerIDFromPrivateKey(bootPriv)
 
 	// ==========================================
-	// 4. OCR3 Node Assembly
-	// Injection of dependencies into the libocr core.
+    // 4. EthTransmitter Initialization 
+    // ==========================================
+	// Pre-allocate RPC clients and cryptographic keys to guarantee low-latency 
+    // on-chain transaction broadcasting during the transmission phase.
+	transmitter, err := NewEthTransmitter(id, n, rpc, privKeyHex, verifierAddress, JobCache)
+	if err != nil {
+		return fmt.Errorf("Failed to initialize ethTransmitter: %w", err)
+	}
+
 	// ==========================================
+	// 5. OCR3 Node Assembly (Dependency Injection)
+	// ==========================================
+	// Build the configuration arguments required by the libocr core state machine.
 	args := offchainreporting2plus.OCR3OracleArgs[struct{}]{
 		BinaryNetworkEndpointFactory: peer.OCR2BinaryNetworkEndpointFactory(),
 		// Connect to the Bootstrap node for peer discovery		
-		V2Bootstrappers: []commontypes.BootstrapperLocator{{PeerID: bootPID.String(), Addrs: []string{bootIP}}},
+		V2Bootstrappers: []commontypes.BootstrapperLocator{
+			{PeerID: bootPID.String(), Addrs: []string{bootIP}},
+		},
 		ContractConfigTracker: staticTracker{cc},
 		// Injecting our custom on-chain interaction logic
-		ContractTransmitter: &ethTransmitter{
-			oracleID: 		id, 
-			rpcUrl: 		rpc, 
-			privKeyHex: 	privKeyHex, // .env key
-			contractAddr: 	verifierAddress, // .env smart contract address
-			jobCache: 		JobCache, // Sharing the memory space with the Listener
-		},
+		ContractTransmitter: transmitter,
 		Database: &memDB3{},
 		// Tuning the protocol limits to handle large array submissions
 		LocalConfig: ocrtypes.LocalConfig{
 			DevelopmentMode: 					ocrtypes.EnableDangerousDevelopmentMode,
-			BlockchainTimeout: 					15*time.Second, 
+			BlockchainTimeout: 					30*time.Second, // Increased from 15 to 30
 			ContractConfigConfirmations:		1, 
 			ContractConfigTrackerPollInterval: 	5*time.Second, 
 			ContractConfigLoadTimeout: 			10*time.Second,
-			ContractTransmitterTransmitTimeout: 30*time.Second,  // Modified later for big array processing
+			ContractTransmitterTransmitTimeout: 60*time.Second,  // Increased from 30 to 60
 			DatabaseTimeout: 					10*time.Second,
 		},
 		Logger: 				quietLogger{log.New(os.Stdout, "", 0)},
@@ -209,32 +202,39 @@ func runOracle(ctx context.Context, id, n, f int, seed int64, bootAddr, listen, 
 		OffchainConfigDigester: digester,
 		OffchainKeyring: 		me.offKR, 
 		OnchainKeyring: 		me.onKR,
-		// Injecting our custom application logic 
+		// Inject the custom Reporting Plugin containing our specific business logic (Attribution)
 		ReportingPluginFactory: attributionPluginFactory{
-			oracleID:	id, // passing the ID of the oracle
-			numOracles: n,
+			//oracleID:	id, 
+			//numOracles: n,
+			//rpcUrl: 	rpc,
+			//contractAddr: verifierAddress,
 		},
 	}
 
 	oracle, err := offchainreporting2plus.NewOracle(args)
 	if err != nil { panic(err) }
 
-	// Starts the internal state machine of OCR3
+	// Starts the internal state machine and consensus loops
 	oracle.Start()
 	fmt.Printf("ORACLE %d STARTED\n", id)
 
-	// Block the main thread until graceful shutdown
+	// Block the main thread until the application context signals a shutdown
 	<-ctx.Done()
+
+	// Graceful teardown of network connections
+	//if err := transmitter.Close(); err != nil {
+	//	log.Printf("Error closing transmitter: %v", err)
+	//}
 	return nil
 }
 
-func main() {
-	// Seed initialization for random generator (vital for the Random Backoff sleep times)
-	rand.Seed(time.Now().UnixNano()) 
 
-	// CLI flags parsing for node configuration
+func main() {
+
+	// CLI flags parsing for node routing and network configuration
 	mode := flag.String("mode", "oracle", "bootstrap|oracle")
 	n := flag.Int("n", 4, "")
+	//f := flag.Int("f", 2, "")
 	f := flag.Int("f", 1, "")
 	id := flag.Int("oracle_id", 0, "")
 	seed := flag.Int64("seed", 1, "")

@@ -1,55 +1,78 @@
 const hre = require("hardhat");
+const { ethers } = hre;
 
+/**
+ * ModelCreatorApprove.js
+ * Acts as the 'Model Creator' authority. It monitors the OracleQueue for new
+ * customer requests and formally approves them to trigger the DON consensus.
+ */
 async function main() {
-  console.log("[MODEL CREATOR] Start validation and approval...");
+  console.log("[MODEL CREATOR] Initializing validation and approval service...");
 
-  const queueAddress = process.env.ORACLE_QUEUE_ADDRESS || "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+  const queueAddress = process.env.QUEUE_ADDRESS;
+  const verifierAddress = process.env.VERIFIER_ADDRESS;
+
+  const [creatorWallet] = await hre.ethers.getSigners();
+
+  // Attach to contracts using the Creator's identity
+  const queueContract = (await hre.ethers.getContractAt("OracleQueue", queueAddress)).connect(creatorWallet);
+  const verifierContract = await hre.ethers.getContractAt("OracleVerifier", verifierAddress);
+
+  console.log(`[MODEL CREATOR] Monitoring 'LogNewCustomerRequest' events...`);
+
+  const MAX_RETRIES = 3;
   
-  // Otteniamo gli account. signers[0] è l'Owner/Model Creator.
-  const signers = await hre.ethers.getSigners();
-  const creatorWallet = signers[0];
+  // Sequential Job Queue: ensures jobs are approved and finalized one by one
+  // to prevent nonce collisions and maintain deterministic benchmark results.
+  let jobProcessingPipeline = Promise.resolve();
 
-  const OracleQueue = await hre.ethers.getContractFactory("OracleQueue");
-  const queueContract = OracleQueue.attach(queueAddress).connect(creatorWallet);
+  queueContract.on("LogNewCustomerRequest", async (requestId, ipfsCid, customer, payment) => {
+    console.log(`\n[EVENT] New Job Detected: #${requestId}`);
+    console.log(`       CID:      ${ipfsCid}`);
+    console.log(`       Value:    ${ethers.formatEther(payment)} ETH`);
 
-  console.log(`[MODEL CREATOR] Listening to LogNewCustomerRequest event...`);
+    // Add job to the sequential pipeline
+    jobProcessingPipeline = jobProcessingPipeline.then(async () => {
+      
+      // --- STEP 1: ON-CHAIN APPROVAL ---
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          console.log(`[PROCESS] Approving job #${requestId} (Attempt ${attempt}/${MAX_RETRIES})...`);
+          const tx = await queueContract.approveJob(requestId);
+          await tx.wait();
+          console.log(`[SUCCESS] Job #${requestId} approved. Oracles notified via LogNewJobForOracles.`);
+          break;
+        } catch (error) {
+          if (attempt === MAX_RETRIES) {
+            console.error(`[ERROR] Job #${requestId} approval failed permanently: ${error.message}`);
+            return;
+          }
+          await new Promise(res => setTimeout(res, 2000));
+        }
+      }
 
-  // Listening to LogNewCostumerRequest event
-  queueContract.on("LogNewCustomerRequest", async (...args) => {
-    // last element passed by Ethers is always the EventLog
-    const requestId = args[0];  // uint256
-    const ipfsCid = args[1];    // string
-    const customer = args[2];   // Customer Address 
-    const payment = args[3];    // Payment in wei
+      // --- STEP 2: WAIT FOR DON FULFILLMENT ---
+      // We use a Promise with .once() to wait for the consensus result to land on-chain.
+      console.log(`[WAIT] Awaiting OCR consensus for job #${requestId}...`);
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error("OCR fulfillment timeout (10m)")), 600000);
 
-    const formattedEth = ethers.formatEther(payment);
-    console.log(`\n[Event Received] New request from the customer!`);
-    console.log(`   Job ID: ${requestId}`);
-    console.log(`   CID: ${ipfsCid}`);
-    console.log(`   Customer: ${customer}`);
-    console.log(`   Payment: ${formattedEth} ETH`);
-    
-    try {
-        console.log(`[MODEL CREATOR] Approval of the job #${requestId}...`);
-        
-        // Call automatically the function approveJob
-        const tx = await queueContract.approveJob(requestId);
-        console.log(`[MODEL CREATOR] Transaction sent... Hash: ${tx.hash}`);
-        
-        await tx.wait();
-        
-        console.log(`[MODEL CREATOR] Success! Event emitted. The Oracles will wake up for the job #${requestId}.`);
-        
-    } catch (error) {
-        console.error("Error in approval phase:", error.message);
-    }
-})
+        verifierContract.once("JobCompleted", (completedId, submitter) => {
+          if (completedId.toString() === requestId.toString()) {
+            clearTimeout(timeout);
+            console.log(`[DONE] Job #${requestId} finalized by Oracle: ${submitter}.`);
+            resolve();
+          }
+        });
+      });
+    });
+  });
 
-  // This keeps the script alive in a infinite loop
+  // Keep the process alive
   await new Promise(() => {});
 }
 
 main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
+  console.error("Fatal service error:", error);
+  process.exit(1);
 });

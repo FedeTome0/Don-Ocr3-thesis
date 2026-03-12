@@ -31,7 +31,7 @@ var (
 
 // OracleQueueMetaData contains all meta data concerning the OracleQueue contract.
 var OracleQueueMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"ipfsCid\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"requester\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"payment\",\"type\":\"uint256\"}],\"name\":\"LogNewCustomerRequest\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"jobId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"ipfsCid\",\"type\":\"string\"}],\"name\":\"LogNewJobForOracles\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_requestId\",\"type\":\"uint256\"}],\"name\":\"approveJob\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"customerQueue\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"ipfsCid\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"requester\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"payment\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"isProcessed\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"modelCreator\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"oracleJobCounter\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"oracleQueue\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"originalRequestId\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"ipfsCid\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_ipfsCid\",\"type\":\"string\"}],\"name\":\"requestAttribution\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"requestCounter\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_queryFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_oracleReward\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"ipfsCid\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"requester\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"payment\",\"type\":\"uint256\"}],\"name\":\"LogNewCustomerRequest\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"jobId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"ipfsCid\",\"type\":\"string\"}],\"name\":\"LogNewJobForOracles\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_requestId\",\"type\":\"uint256\"}],\"name\":\"approveJob\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"customerQueue\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"ipfsCid\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"requester\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"payment\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"isProcessed\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"modelCreator\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"oracleJobCounter\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"oracleQueue\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"originalRequestId\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"ipfsCid\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"oracleReward\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"oracleVerifierAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"queryFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_ipfsCid\",\"type\":\"string\"}],\"name\":\"requestAttribution\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"requestCounter\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"addresspayable\",\"name\":\"_oracle\",\"type\":\"address\"}],\"name\":\"rewardOracle\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_verifier\",\"type\":\"address\"}],\"name\":\"setVerifierAddress\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // OracleQueueABI is the input ABI used to generate the binding from.
@@ -342,6 +342,99 @@ func (_OracleQueue *OracleQueueCallerSession) OracleQueue(arg0 *big.Int) (struct
 	return _OracleQueue.Contract.OracleQueue(&_OracleQueue.CallOpts, arg0)
 }
 
+// OracleReward is a free data retrieval call binding the contract method 0x21873631.
+//
+// Solidity: function oracleReward() view returns(uint256)
+func (_OracleQueue *OracleQueueCaller) OracleReward(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _OracleQueue.contract.Call(opts, &out, "oracleReward")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// OracleReward is a free data retrieval call binding the contract method 0x21873631.
+//
+// Solidity: function oracleReward() view returns(uint256)
+func (_OracleQueue *OracleQueueSession) OracleReward() (*big.Int, error) {
+	return _OracleQueue.Contract.OracleReward(&_OracleQueue.CallOpts)
+}
+
+// OracleReward is a free data retrieval call binding the contract method 0x21873631.
+//
+// Solidity: function oracleReward() view returns(uint256)
+func (_OracleQueue *OracleQueueCallerSession) OracleReward() (*big.Int, error) {
+	return _OracleQueue.Contract.OracleReward(&_OracleQueue.CallOpts)
+}
+
+// OracleVerifierAddress is a free data retrieval call binding the contract method 0x42e7c0b0.
+//
+// Solidity: function oracleVerifierAddress() view returns(address)
+func (_OracleQueue *OracleQueueCaller) OracleVerifierAddress(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _OracleQueue.contract.Call(opts, &out, "oracleVerifierAddress")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// OracleVerifierAddress is a free data retrieval call binding the contract method 0x42e7c0b0.
+//
+// Solidity: function oracleVerifierAddress() view returns(address)
+func (_OracleQueue *OracleQueueSession) OracleVerifierAddress() (common.Address, error) {
+	return _OracleQueue.Contract.OracleVerifierAddress(&_OracleQueue.CallOpts)
+}
+
+// OracleVerifierAddress is a free data retrieval call binding the contract method 0x42e7c0b0.
+//
+// Solidity: function oracleVerifierAddress() view returns(address)
+func (_OracleQueue *OracleQueueCallerSession) OracleVerifierAddress() (common.Address, error) {
+	return _OracleQueue.Contract.OracleVerifierAddress(&_OracleQueue.CallOpts)
+}
+
+// QueryFee is a free data retrieval call binding the contract method 0xfdd26881.
+//
+// Solidity: function queryFee() view returns(uint256)
+func (_OracleQueue *OracleQueueCaller) QueryFee(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _OracleQueue.contract.Call(opts, &out, "queryFee")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// QueryFee is a free data retrieval call binding the contract method 0xfdd26881.
+//
+// Solidity: function queryFee() view returns(uint256)
+func (_OracleQueue *OracleQueueSession) QueryFee() (*big.Int, error) {
+	return _OracleQueue.Contract.QueryFee(&_OracleQueue.CallOpts)
+}
+
+// QueryFee is a free data retrieval call binding the contract method 0xfdd26881.
+//
+// Solidity: function queryFee() view returns(uint256)
+func (_OracleQueue *OracleQueueCallerSession) QueryFee() (*big.Int, error) {
+	return _OracleQueue.Contract.QueryFee(&_OracleQueue.CallOpts)
+}
+
 // RequestCounter is a free data retrieval call binding the contract method 0x973a814e.
 //
 // Solidity: function requestCounter() view returns(uint256)
@@ -413,6 +506,48 @@ func (_OracleQueue *OracleQueueSession) RequestAttribution(_ipfsCid string) (*ty
 // Solidity: function requestAttribution(string _ipfsCid) payable returns()
 func (_OracleQueue *OracleQueueTransactorSession) RequestAttribution(_ipfsCid string) (*types.Transaction, error) {
 	return _OracleQueue.Contract.RequestAttribution(&_OracleQueue.TransactOpts, _ipfsCid)
+}
+
+// RewardOracle is a paid mutator transaction binding the contract method 0x1fafb331.
+//
+// Solidity: function rewardOracle(address _oracle) returns()
+func (_OracleQueue *OracleQueueTransactor) RewardOracle(opts *bind.TransactOpts, _oracle common.Address) (*types.Transaction, error) {
+	return _OracleQueue.contract.Transact(opts, "rewardOracle", _oracle)
+}
+
+// RewardOracle is a paid mutator transaction binding the contract method 0x1fafb331.
+//
+// Solidity: function rewardOracle(address _oracle) returns()
+func (_OracleQueue *OracleQueueSession) RewardOracle(_oracle common.Address) (*types.Transaction, error) {
+	return _OracleQueue.Contract.RewardOracle(&_OracleQueue.TransactOpts, _oracle)
+}
+
+// RewardOracle is a paid mutator transaction binding the contract method 0x1fafb331.
+//
+// Solidity: function rewardOracle(address _oracle) returns()
+func (_OracleQueue *OracleQueueTransactorSession) RewardOracle(_oracle common.Address) (*types.Transaction, error) {
+	return _OracleQueue.Contract.RewardOracle(&_OracleQueue.TransactOpts, _oracle)
+}
+
+// SetVerifierAddress is a paid mutator transaction binding the contract method 0x17e95526.
+//
+// Solidity: function setVerifierAddress(address _verifier) returns()
+func (_OracleQueue *OracleQueueTransactor) SetVerifierAddress(opts *bind.TransactOpts, _verifier common.Address) (*types.Transaction, error) {
+	return _OracleQueue.contract.Transact(opts, "setVerifierAddress", _verifier)
+}
+
+// SetVerifierAddress is a paid mutator transaction binding the contract method 0x17e95526.
+//
+// Solidity: function setVerifierAddress(address _verifier) returns()
+func (_OracleQueue *OracleQueueSession) SetVerifierAddress(_verifier common.Address) (*types.Transaction, error) {
+	return _OracleQueue.Contract.SetVerifierAddress(&_OracleQueue.TransactOpts, _verifier)
+}
+
+// SetVerifierAddress is a paid mutator transaction binding the contract method 0x17e95526.
+//
+// Solidity: function setVerifierAddress(address _verifier) returns()
+func (_OracleQueue *OracleQueueTransactorSession) SetVerifierAddress(_verifier common.Address) (*types.Transaction, error) {
+	return _OracleQueue.Contract.SetVerifierAddress(&_OracleQueue.TransactOpts, _verifier)
 }
 
 // OracleQueueLogNewCustomerRequestIterator is returned from FilterLogNewCustomerRequest and is used to iterate over the raw logs and unpacked data for LogNewCustomerRequest events raised by the OracleQueue contract.

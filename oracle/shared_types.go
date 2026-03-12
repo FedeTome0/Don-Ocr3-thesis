@@ -15,103 +15,54 @@ import (
 )
 
 // =============================================================================
-// Structs
-// =============================================================================
-// queryPayload: The job every oracle has to do
-/*
-type queryPayload struct {
-	RequestID string `json:"requestId,omitempty"`
-	Cid string `json:"statement,omitempty"` 
-}
-
-// AttributionMatrix: represent a serialized matrix
-// Es: [[0.5, 0.2], [0.9, 0.1]]
-type AttributionMatrix struct {
-	Rows [][]float64 `json:"rows"`
-}
-
-// observationPayload: What every oracle create after observation phase
-type observationPayload struct {
-	Matrix AttributionMatrix `json:"matrix"`
-}
-
-// outcomePayload: Final result
-type outcomePayload struct {
-	RequestID string            `json:"requestId,omitempty"`
-	Matrix    AttributionMatrix `json:"matrix"`
-}
-*/
-
-// =============================================================================
-// Structs & Types (JSON, not used anymore)
+// JSON PAYKIAD STRUCTURES 
 // =============================================================================
 
-type queryPayload struct {
-	RequestID *big.Int // Usiamo big.Int per compatibilità con uint256
-	Cid       string
-}
-
-// observationPayload: Ora contiene il vettore di BigInt
-type observationPayload struct {
-	Vector []*big.Int
-}
-
-// outcomePayload: Risultato finale
-type outcomePayload struct {
-	RequestID *big.Int
-	Vector    []*big.Int
-}
-
-// Structure to send the POST request to the python server
+// AttributeRequest represents the JSON payload sent via POST to the Python AI service.
 type AttributeRequest struct {
-    JobId  string `json:"job_id"`  // Use the job_id to identify the job
+    JobId  string `json:"job_id"`  // Unique identifier for the attribution job
     Text string `json:"text"` // Content downloaded from IPFS
 }
 
-// Structure to read the results (GET)
+// AttributeResponse represents the expected JSON response from the Python AI polling endpoint.
 type AttributeResponse struct {
-    Status string   `json:"status"`
-    Result []string `json:"result"` // Later it will be converted
-    Error  string   `json:"error,omitempty"`
+    Status string   `json:"status"` // Job lifecycle state (e.g., "processing", "completed")
+    Result []string `json:"result"` // String representations of the calculated BigInt vector
+    Error  string   `json:"error,omitempty"` // Populated only if the AI computation fails
 }
 
 // =============================================================================
-// ABI SCHEMA DEFINITIONS
+// ON-CHAIN ABI SCHEMA DEFINITIONS
 // =============================================================================
 
-// Define the encoding rules for OCR consensus. 
-// We use ABI encoding to ensure native compatibility with the EVM Smart Contract.
+// The following structures define the encoding rules for OCR3 consensus payloads.
+// Strict ABI encoding ensures native data compatibility with the EVM Smart Contract.
 var (
+	// QueryArgs: Data proposed by the Round Leader to initialize consensus.
 	// Query: uint256 (JobId), string (IPFS CID)
 	QueryArgs = abi.Arguments{
 		{Type: MustParseType("uint256")},
 		{Type: MustParseType("string")},
 	}
 
-	// Observation: int256[] ATTENTO QUA, AVEVO MESSO 128
-	//ObservationArgs = abi.Arguments{
-	//	{Type: MustParseType("int256[]")},
-	//}
-	// Optimized from int256 to int128 to save gas (storage packing) on-chain.
+	// ObservationArgs: The calculated data returned by individual Oracle nodes.
+    // Encodes: int128[] (Attribution Vector)
+    // Note: Optimized from int256[] to int128[] to leverage Solidity storage packing,
+    // significantly reducing gas costs during the final state transition.
 	ObservationArgs = abi.Arguments{
 		{Type: MustParseType("int128[]")},
 	}
 
-	// STESSO MOTIVO DI SOPRA
-	// Outcome: uint256, int256[]
-	//OutcomeArgs = abi.Arguments{
-	//	{Type: MustParseType("uint256")},
-	//	{Type: MustParseType("int256[]")},
-	//}
-	// Outcome: uint256 (JobID), int128[] (Result Vector)
+	// OutcomeArgs: The final, aggregated BFT consensus result.
+    // Encodes: uint256 (JobID), int128[] (Median Attribution Vector)
 	OutcomeArgs = abi.Arguments{
 		{Type: MustParseType("uint256")},
 		{Type: MustParseType("int128[]")},
 	}
 )
 
-// MustParseType parses a Solidity type string ("uint256") into an ABI type.
-// It panics on failure as strict type correctness is required 
+// MustParseType dynamically parses a Solidity type string into a valid Go-Ethereum ABI type.
+// It panics upon initialization if the type is invalid, enforcing strict type safety.
 func MustParseType(t string) abi.Type {
 	ty, err := abi.NewType(t, "", nil)
 	if err != nil {
@@ -120,22 +71,6 @@ func MustParseType(t string) abi.Type {
 	return ty
 }
 
-// Working version
-// Shared memory between the OCR plugin(reader) and the listener(writer)
-/*
-type jobCache struct {
-	sync.RWMutex
-	LatestJobID *big.Int
-	LatestCID   string
-	JobData     string // The downloaded data from ipfs (CID string)
-	Processed   bool   // If true it has already been processed in another round
-}
-
-var JobCache = &jobCache{
-	LatestJobID: big.NewInt(-1), // Starts from -1, because the job n.0 is going to be seen in this way
-	Processed:   false,
-}
-*/
 
 // =============================================================================
 // INFRASTRUCTURE STUBS
@@ -232,19 +167,18 @@ func (t staticTracker) LatestConfig(context.Context, uint64) (ocrtypes.ContractC
 func (t staticTracker) LatestBlockHeight(context.Context) (uint64, error) { return 1, nil }
 
 // =============================================================================
-// ASYNCHRONOUS STATE MANAGEMENT
+// ASYNCHRONOUS STATE MANAGEMENT & LOCAL CACHE
 // =============================================================================
 
 // JobState tracks the lifecycle of an off-chain computation.
 type JobState int
-// Method to represent an enum in Go
 const (
-	StatePending JobState = iota	// Calculation in progress
-	StateCompleted					// Result ready in RAM
-	StateFailed						// Error occurred
+	StatePending JobState = iota	// Background AI computation is in progress
+	StateCompleted					// Result vector is ready in local RAM
+	StateFailed						// Async task encountered a fatal error
 )
 
-// JobData encapsulates all context required for a specific request
+// JobData encapsulates all context required to process a specific request
 type JobData struct {
 	JobID     *big.Int
 	CID       string
@@ -261,12 +195,22 @@ type jobCache struct {
 	sync.RWMutex
 	LatestJobID *big.Int
 	jobs        map[uint64]*JobData
+	queue 		[]uint64 // FIFO array to maintain determinstic processing order for the Leader
 }
 
 // Global instance initialized at startup
 var JobCache = &jobCache{
 	LatestJobID: big.NewInt(-1),
 	jobs:        make(map[uint64]*JobData),
+	queue:		 make([]uint64, 0),
+}
+
+// enqueue safely registers a newly detected job, appending it to the processing queue.
+func (c *jobCache) enqueue(id uint64, job *JobData) {
+	if _, exists := c.jobs[id]; !exists {
+		c.jobs[id] = job
+		c.queue = append(c.queue, id)
+	}
 }
 
 // MarkJobAsProcessed updates the job status atomically

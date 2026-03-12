@@ -45,7 +45,7 @@ To run this project locally, ensure you have the following installed on your mac
 
 ## How to Run the Project locally 
 Thanks to the Docker orchestration, booting the entire ecosystem is highly automated. 
-The docker-compose setup will:
+The `docker-compose` setup will:
 
 - Start the Hardhat local node
 - Wait for it to be ready
@@ -54,24 +54,38 @@ The docker-compose setup will:
 
 To test the full system, follow this chronological sequence.
 
+> **Note - Network Size:** To change the number of active oracles, uncomment the relevant services in the `docker-compose.yml` file and update the `NUM_ORACLES` variable in your `.env` file accordingly.
+
+> **Note - Latency Mode:** To enable latency mode (simulating real-world network delays), you must toggle the comments on the `ENTRYPOINT` instructions inside the `oracle/Dockerfile`:
+> ```dockerfile
+> # Latency mode (Simulates real network)
+> ENTRYPOINT ["/usr/local/bin/setup_network.sh"]
+> 
+> # Zero-Latency mode (Fast local testing)
+> #ENTRYPOINT ["/usr/local/bin/wait-for-deploy.sh"]
+> ```
+
+> **Note - Byzantine Testing:** You can test the BFT consensus by simulating malicious node behavior. In the `docker-compose.yml` file, change a node's `MALICIOUS_MODE` environment variable to `"transmit_fail"`, `"timeout"`, or `"alter"`.
+
 ---
 ## Step 1: Start the AI Backend and SSH Tunnel
 
 The oracles communicate with the Python AI server hosted on the remote machine (`satoshi`).
 
-### 1. Access the remote server and start the Python model service (All in satoshi)
+### 1. Access the remote server via SSH tunnel
+
+```bash
+ssh -L 9090:127.0.0.1:50100 tomelliniT@131.114.50.205
+```
+### 2. Follow this path
+ Go in `data/tomelliniT/oc3-thesis/alps-ai-master/model`. Run `source env/bin/activate` to activate the python environment and then you can proceed by starting the server.
+
+### 3. Start the Python model service
 
 ```bash
 python model_service_v2.py
 ```
 
-### 2. Open a new local terminal and create an SSH tunnel
-
-```bash
-ssh -L 50100:127.0.0.1:50100 tomelliniT@131.114.50.205
-```
-
-Keep this terminal open to maintain the connection. Instead, you can use the ssh command and then work in that terminal. Go in `data/tomelliniT/oc3-thesis/alps-ai-master/model`. Run `source env/bin/activate` to activate the python environment and then you can proceed by starting the server.
 
 ---
 
@@ -88,6 +102,7 @@ docker compose up --build
 - A local Hardhat blockchain is initialized
 - The `OracleVerifier` and `OracleQueue` smart contracts are compiled and deployed automatically
 - IPFS nodes are started for decentralized storage
+- Simulated latency instantiated among the containers
 - The Go-based OCR3 oracle nodes are built and begin listening to the blockchain
 
 Wait until you see the message:
@@ -129,6 +144,12 @@ Open another terminal:
 ```bash
 cd chain
 npx hardhat run scripts/customerRequest.js --network localhost
+```
+
+Instead, for testing:
+```bash
+cd chain
+npx hardhat run scripts/benchmark.js --network localhost
 ```
 
 At this point:

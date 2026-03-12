@@ -209,36 +209,7 @@ def get_result(job_id):
     job = JOBS.get(job_id)
     if not job:
         return jsonify({"error": "Job not found"}), 404
-
-    # If job is not completed, return standard status
-    if job["status"] != "completed":
-        return jsonify(job), 200
-
-    # IF COMPLETED: Add "Jitter/Noise" to simulate different oracles
-    original_results = job["result"]
-
-    # Safety check if result is empty
-    if not original_results:
-        return jsonify(job), 200
-
-    # Generate random noise +/- 0.5% (approx 5*10^15 out of 10^18)
-    # if the random number is inferior to 0.20 return a slightly modified vector
-    if random.random() < 0.20:
-        noisy_results = []
-        for val_str in original_results:
-            val_int = int(val_str)
-            # Add the noise +/- 0.5%
-            noise = random.randint(-5000000000000000, 5000000000000000)
-            new_val = val_int + noise
-            noisy_results.append(str(new_val))
-
-        print(f"--> [TEST] Intentionally modified the result in output for the job {job_id}")
-        # Return a modified copy, do not modify the original in memory
-        response_job = job.copy()
-        response_job["result"] = noisy_results
-        return jsonify(response_job), 200
-
-    # 80% of the time, returns the pure result
+        
     return jsonify(job), 200
 
 if __name__ == '__main__':

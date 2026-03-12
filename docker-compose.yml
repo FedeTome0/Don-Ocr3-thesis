@@ -1,13 +1,190 @@
+# services:
+#   # ---------------------------------------------------------
+#   # 1. BLOCKCHAIN (Hardhat)
+#   # ---------------------------------------------------------
+#   chain:
+#     build: ./chain
+#     ports:
+#       - "8545:8545" #Changed for view call problems
+#     networks:
+#       - ocr-net  
+#     env_file:
+#       - .env
+
+#   # ---------------------------------------------------------
+#   # 2. IPFS server
+#   # ---------------------------------------------------------
+#   ipfs:
+#     image:  ipfs/kubo:latest
+#     container_name: ipfs_node
+#     restart: always
+#     ports:
+#       - "4001:4001"   # P2P swarm communication
+#       - "5001:5001"   # Upload port (Writing)
+#       - "8080:8080"   # Donwload port (Reading)
+#     environment:
+#       - IPFS_PROFILE=server
+#     volumes:
+#       - ./IpfsAgent/ipfs_data:/data/ipfs  # To store data in a persistency way
+#       - ./IpfsAgent/ipfs_staging:/export
+#     networks:
+#       - ocr-net
+
+#   # ---------------------------------------------------------
+#   # 3. BOOTSTRAPPER (Oracle)
+#   # ---------------------------------------------------------
+#   bootstrap:
+#     build: ./oracle
+#     env_file: 
+#       - .env
+#     # Start in bootstrap mode
+#     command: [
+#       "oracle", 
+#       "-mode", "bootstrap", 
+#       "-n", "4",
+#       "-seed", "1",
+#       "-bootstrap_listen", "0.0.0.0:${BOOTSTRAP_PORT}",
+#       "-bootstrap_announce", "${BOOTSTRAP_ADDR}"
+#     ]
+#     ports:
+#       - "19900:19900"
+#     networks:
+#       - ocr-net
+#     depends_on:
+#       chain:
+#         condition: service_started
+
+#   # ---------------------------------------------------------
+#   # 4. ORACLE NODES (0 to 3)
+#   # ---------------------------------------------------------
+#   oracle0:
+#     build: ./oracle
+#     env_file:
+#       - .env
+#     extra_hosts:
+#       - "host.docker.internal:host-gateway"
+#     environment:
+#       - CHAIN_RPC=${CHAIN_RPC_URL}
+#       - PRIVATE_KEY=${ORACLE0_PRIVATE_KEY}
+#       - VERIFIER_ADDRESS=${VERIFIER_ADDRESS}
+#       - QUEUE_CONTRACT_ADDRESS=${QUEUE_ADDRESS}
+#       - IPFS_API_URL=${DOCKER_IPFS_URL}
+#     command: [
+#       "oracle",
+#       "-mode", "oracle",
+#       "-n", "4",
+#       "-oracle_id", "0",
+#       "-seed", "1",
+#       "-bootstrap_addr", "${BOOTSTRAP_ADDR}",
+#       "-p2p_listen", "0.0.0.0:${ORACLE_P2P_PORT}",
+#       "-p2p_announce", "oracle0:${ORACLE_P2P_PORT}"
+#     ]
+#     networks:
+#       - ocr-net
+#     depends_on:
+#       - chain
+#       - bootstrap
+
+#   oracle1:
+#     build: ./oracle
+#     env_file:
+#       - .env
+#     extra_hosts:
+#       - "host.docker.internal:host-gateway"
+#     environment:
+#       - CHAIN_RPC=${CHAIN_RPC_URL}
+#       - PRIVATE_KEY=${ORACLE1_PRIVATE_KEY}
+#       - VERIFIER_ADDRESS=${VERIFIER_ADDRESS}
+#       - QUEUE_CONTRACT_ADDRESS=${QUEUE_ADDRESS}
+#       - IPFS_API_URL=${DOCKER_IPFS_URL}
+#     command: [
+#       "oracle",
+#       "-mode", "oracle",
+#       "-n", "4",
+#       "-oracle_id", "1",
+#       "-seed", "1",
+#       "-bootstrap_addr", "${BOOTSTRAP_ADDR}",
+#       "-p2p_listen", "0.0.0.0:${ORACLE_P2P_PORT}",
+#       "-p2p_announce", "oracle1:${ORACLE_P2P_PORT}"
+#     ]
+#     networks:
+#       - ocr-net
+#     depends_on:
+#       - chain
+#       - bootstrap
+
+#   oracle2:
+#     build: ./oracle
+#     env_file:
+#       - .env
+#     extra_hosts:
+#       - "host.docker.internal:host-gateway"
+#     environment:
+#       - CHAIN_RPC=${CHAIN_RPC_URL}
+#       - PRIVATE_KEY=${ORACLE2_PRIVATE_KEY}
+#       - VERIFIER_ADDRESS=${VERIFIER_ADDRESS}
+#       - QUEUE_CONTRACT_ADDRESS=${QUEUE_ADDRESS}
+#       - IPFS_API_URL=${DOCKER_IPFS_URL}
+#     command: [
+#       "oracle",
+#       "-mode", "oracle",
+#       "-n", "4",
+#       "-oracle_id", "2",
+#       "-seed", "1",
+#       "-bootstrap_addr", "${BOOTSTRAP_ADDR}",
+#       "-p2p_listen", "0.0.0.0:${ORACLE_P2P_PORT}",
+#       "-p2p_announce", "oracle2:${ORACLE_P2P_PORT}"
+#     ]
+#     networks:
+#       - ocr-net
+#     depends_on:
+#       - chain
+#       - bootstrap
+
+#   oracle3:
+#     build: ./oracle
+#     env_file:
+#       - .env
+#     extra_hosts:
+#       - "host.docker.internal:host-gateway"
+#     environment:
+#       - CHAIN_RPC=${CHAIN_RPC_URL}
+#       - PRIVATE_KEY=${ORACLE3_PRIVATE_KEY}
+#       - VERIFIER_ADDRESS=${VERIFIER_ADDRESS}
+#       - QUEUE_CONTRACT_ADDRESS=${QUEUE_ADDRESS}
+#       - IPFS_API_URL=${DOCKER_IPFS_URL}
+#     command: [
+#       "oracle",
+#       "-mode", "oracle",
+#       "-n", "4",
+#       "-oracle_id", "3",
+#       "-seed", "1",
+#       "-bootstrap_addr", "${BOOTSTRAP_ADDR}",
+#       "-p2p_listen", "0.0.0.0:${ORACLE_P2P_PORT}",
+#       "-p2p_announce", "oracle3:${ORACLE_P2P_PORT}"
+#     ]
+#     networks:
+#       - ocr-net
+#     depends_on:
+#       - chain
+#       - bootstrap
+
+# networks:
+#   ocr-net:
+#     driver: bridge
+
 services:
   # ---------------------------------------------------------
   # 1. BLOCKCHAIN (Hardhat)
   # ---------------------------------------------------------
   chain:
+    container_name: chain
     build: ./chain
     ports:
-      - "8545:8545" #Changed for view call problems
+      - "8545:8545" 
     networks:
-      - ocr-net  
+      ocr-net:
+        ipv4_address: 10.5.0.10
     env_file:
       - .env
 
@@ -28,7 +205,8 @@ services:
       - ./IpfsAgent/ipfs_data:/data/ipfs  # To store data in a persistency way
       - ./IpfsAgent/ipfs_staging:/export
     networks:
-      - ocr-net
+      ocr-net:
+        ipv4_address: 10.5.0.11
 
   # ---------------------------------------------------------
   # 3. BOOTSTRAPPER (Oracle)
@@ -42,6 +220,8 @@ services:
       "oracle", 
       "-mode", "bootstrap", 
       "-n", "4",
+      #"-n", "7",
+      "-f", "1",
       "-seed", "1",
       "-bootstrap_listen", "0.0.0.0:${BOOTSTRAP_PORT}",
       "-bootstrap_announce", "${BOOTSTRAP_ADDR}"
@@ -49,30 +229,40 @@ services:
     ports:
       - "19900:19900"
     networks:
-      - ocr-net
+      ocr-net:
+        ipv4_address: 10.5.0.12
     depends_on:
       chain:
         condition: service_started
 
   # ---------------------------------------------------------
-  # 4. ORACLE NODES (0 to 3)
+  # 4. ORACLE NODES (0 to 3) or (0 to 7)
   # ---------------------------------------------------------
+  # All'aumentare dei nodi vanno modificati il command e tutto il resto
+  # Milan node
   oracle0:
+    container_name: node_oracle0
     build: ./oracle
     env_file:
       - .env
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    cap_add:
+      - NET_ADMIN
     environment:
       - CHAIN_RPC=${CHAIN_RPC_URL}
       - PRIVATE_KEY=${ORACLE0_PRIVATE_KEY}
       - VERIFIER_ADDRESS=${VERIFIER_ADDRESS}
       - QUEUE_CONTRACT_ADDRESS=${QUEUE_ADDRESS}
       - IPFS_API_URL=${DOCKER_IPFS_URL}
+      - MALICIOUS_MODE=false
+      - ORACLE_ID=0
     command: [
       "oracle",
       "-mode", "oracle",
       "-n", "4",
+      #"-n", "7",
+      "-f", "1",
       "-oracle_id", "0",
       "-seed", "1",
       "-bootstrap_addr", "${BOOTSTRAP_ADDR}",
@@ -80,27 +270,36 @@ services:
       "-p2p_announce", "oracle0:${ORACLE_P2P_PORT}"
     ]
     networks:
-      - ocr-net
+      ocr-net:
+        ipv4_address: 10.5.0.20
     depends_on:
       - chain
       - bootstrap
 
+  # Mumbai
   oracle1:
+    container_name: node_oracle1
     build: ./oracle
     env_file:
       - .env
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    cap_add:
+      - NET_ADMIN
     environment:
       - CHAIN_RPC=${CHAIN_RPC_URL}
       - PRIVATE_KEY=${ORACLE1_PRIVATE_KEY}
       - VERIFIER_ADDRESS=${VERIFIER_ADDRESS}
       - QUEUE_CONTRACT_ADDRESS=${QUEUE_ADDRESS}
       - IPFS_API_URL=${DOCKER_IPFS_URL}
+      - MALICIOUS_MODE=false
+      - ORACLE_ID=1
     command: [
       "oracle",
       "-mode", "oracle",
       "-n", "4",
+      #"-n", "7",
+      "-f", "1",
       "-oracle_id", "1",
       "-seed", "1",
       "-bootstrap_addr", "${BOOTSTRAP_ADDR}",
@@ -108,27 +307,36 @@ services:
       "-p2p_announce", "oracle1:${ORACLE_P2P_PORT}"
     ]
     networks:
-      - ocr-net
+      ocr-net:
+        ipv4_address: 10.5.0.21
     depends_on:
       - chain
       - bootstrap
 
+  # NewYork
   oracle2:
+    container_name: node_oracle2
     build: ./oracle
     env_file:
       - .env
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    cap_add:
+      - NET_ADMIN
     environment:
       - CHAIN_RPC=${CHAIN_RPC_URL}
       - PRIVATE_KEY=${ORACLE2_PRIVATE_KEY}
       - VERIFIER_ADDRESS=${VERIFIER_ADDRESS}
       - QUEUE_CONTRACT_ADDRESS=${QUEUE_ADDRESS}
       - IPFS_API_URL=${DOCKER_IPFS_URL}
+      - MALICIOUS_MODE=false
+      - ORACLE_ID=2
     command: [
       "oracle",
       "-mode", "oracle",
       "-n", "4",
+      #"-n", "7",
+      "-f", "1",
       "-oracle_id", "2",
       "-seed", "1",
       "-bootstrap_addr", "${BOOTSTRAP_ADDR}",
@@ -136,27 +344,36 @@ services:
       "-p2p_announce", "oracle2:${ORACLE_P2P_PORT}"
     ]
     networks:
-      - ocr-net
+      ocr-net:
+        ipv4_address: 10.5.0.22
     depends_on:
       - chain
       - bootstrap
 
+  # Johannesburg
   oracle3:
+    container_name: node_oracle3
     build: ./oracle
     env_file:
       - .env
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    cap_add:
+      - NET_ADMIN
     environment:
       - CHAIN_RPC=${CHAIN_RPC_URL}
       - PRIVATE_KEY=${ORACLE3_PRIVATE_KEY}
       - VERIFIER_ADDRESS=${VERIFIER_ADDRESS}
       - QUEUE_CONTRACT_ADDRESS=${QUEUE_ADDRESS}
       - IPFS_API_URL=${DOCKER_IPFS_URL}
+      - MALICIOUS_MODE=false
+      - ORACLE_ID=3
     command: [
       "oracle",
       "-mode", "oracle",
       "-n", "4",
+      #"-n", "7",
+      "-f", "1",
       "-oracle_id", "3",
       "-seed", "1",
       "-bootstrap_addr", "${BOOTSTRAP_ADDR}",
@@ -164,11 +381,127 @@ services:
       "-p2p_announce", "oracle3:${ORACLE_P2P_PORT}"
     ]
     networks:
-      - ocr-net
+      ocr-net:
+        ipv4_address: 10.5.0.23
     depends_on:
       - chain
       - bootstrap
 
+  # # Lisbon
+  # oracle4:
+  #   container_name: node_oracle4
+  #   build: ./oracle
+  #   env_file:
+  #     - .env
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   cap_add:
+  #     - NET_ADMIN
+  #   environment:
+  #     - CHAIN_RPC=${CHAIN_RPC_URL}
+  #     - PRIVATE_KEY=${ORACLE4_PRIVATE_KEY}
+  #     - VERIFIER_ADDRESS=${VERIFIER_ADDRESS}
+  #     - QUEUE_CONTRACT_ADDRESS=${QUEUE_ADDRESS}
+  #     - IPFS_API_URL=${DOCKER_IPFS_URL}
+  #     - MALICIOUS_MODE=false
+  #     - ORACLE_ID=4
+  #   command: [
+  #     "oracle",
+  #     "-mode", "oracle",
+  #     #"-n", "4",
+  #     "-n", "7",
+  #     "-f", "2",
+  #     "-oracle_id", "4",
+  #     "-seed", "1",
+  #     "-bootstrap_addr", "${BOOTSTRAP_ADDR}",
+  #     "-p2p_listen", "0.0.0.0:${ORACLE_P2P_PORT}",
+  #     "-p2p_announce", "oracle4:${ORACLE_P2P_PORT}"
+  #   ]
+  #   networks:
+  #     ocr-net:
+  #       ipv4_address: 10.5.0.24
+  #   depends_on:
+  #     - chain
+  #     - bootstrap
+
+  # # Moscow
+  # oracle5:
+  #   container_name: node_oracle5
+  #   build: ./oracle
+  #   env_file:
+  #     - .env
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   cap_add:
+  #     - NET_ADMIN
+  #   environment:
+  #     - CHAIN_RPC=${CHAIN_RPC_URL}
+  #     - PRIVATE_KEY=${ORACLE5_PRIVATE_KEY}
+  #     - VERIFIER_ADDRESS=${VERIFIER_ADDRESS}
+  #     - QUEUE_CONTRACT_ADDRESS=${QUEUE_ADDRESS}
+  #     - IPFS_API_URL=${DOCKER_IPFS_URL}
+  #     - MALICIOUS_MODE=false
+  #     - ORACLE_ID=5
+  #   command: [
+  #     "oracle",
+  #     "-mode", "oracle",
+  #     #"-n", "4",
+  #     "-n", "7",
+  #     "-f", "2",
+  #     "-oracle_id", "5",
+  #     "-seed", "1",
+  #     "-bootstrap_addr", "${BOOTSTRAP_ADDR}",
+  #     "-p2p_listen", "0.0.0.0:${ORACLE_P2P_PORT}",
+  #     "-p2p_announce", "oracle5:${ORACLE_P2P_PORT}"
+  #   ]
+  #   networks:
+  #     ocr-net:
+  #       ipv4_address: 10.5.0.25
+  #   depends_on:
+  #     - chain
+  #     - bootstrap
+
+  # # Toronto
+  # oracle6:
+  #   container_name: node_oracle6
+  #   build: ./oracle
+  #   env_file:
+  #     - .env
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   cap_add:
+  #     - NET_ADMIN
+  #   environment:
+  #     - CHAIN_RPC=${CHAIN_RPC_URL}
+  #     - PRIVATE_KEY=${ORACLE6_PRIVATE_KEY}
+  #     - VERIFIER_ADDRESS=${VERIFIER_ADDRESS}
+  #     - QUEUE_CONTRACT_ADDRESS=${QUEUE_ADDRESS}
+  #     - IPFS_API_URL=${DOCKER_IPFS_URL}
+  #     - MALICIOUS_MODE=false
+  #     - ORACLE_ID=6
+  #   command: [
+  #     "oracle",
+  #     "-mode", "oracle",
+  #     #"-n", "4",
+  #     "-n", "7",
+  #     "-f", "2",
+  #     "-oracle_id", "6",
+  #     "-seed", "1",
+  #     "-bootstrap_addr", "${BOOTSTRAP_ADDR}",
+  #     "-p2p_listen", "0.0.0.0:${ORACLE_P2P_PORT}",
+  #     "-p2p_announce", "oracle6:${ORACLE_P2P_PORT}"
+  #   ]
+  #   networks:
+  #     ocr-net:
+  #       ipv4_address: 10.5.0.26
+  #   depends_on:
+  #     - chain
+  #     - bootstrap
+
+
 networks:
   ocr-net:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.0.0/16

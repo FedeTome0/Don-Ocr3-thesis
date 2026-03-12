@@ -1,5 +1,31 @@
 [
     {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "_oracles",
+          "type": "address[]"
+        },
+        {
+          "internalType": "uint8",
+          "name": "_f",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "_configDigest",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "_queueAddress",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
       "anonymous": false,
       "inputs": [
         {
@@ -17,7 +43,7 @@
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "vectorLenght",
+          "name": "vectorLength",
           "type": "uint256"
         },
         {
@@ -29,6 +55,32 @@
       ],
       "name": "JobCompleted",
       "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "expectedConfigDigest",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "f",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
     },
     {
       "inputs": [
@@ -81,6 +133,38 @@
     {
       "inputs": [
         {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "isOracle",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "oracleQueue",
+      "outputs": [
+        {
+          "internalType": "contract IOracleQueue",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "uint256",
           "name": "",
           "type": "uint256"
@@ -110,19 +194,58 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "jobId",
-          "type": "uint256"
+          "internalType": "bytes32",
+          "name": "configDigest",
+          "type": "bytes32"
         },
         {
-          "internalType": "int128[]",
-          "name": "_flatMatrix",
-          "type": "int128[]"
+          "internalType": "uint64",
+          "name": "seqNr",
+          "type": "uint64"
+        },
+        {
+          "internalType": "bytes",
+          "name": "report",
+          "type": "bytes"
+        },
+        {
+          "internalType": "bytes32[]",
+          "name": "rs",
+          "type": "bytes32[]"
+        },
+        {
+          "internalType": "bytes32[]",
+          "name": "ss",
+          "type": "bytes32[]"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "rawVs",
+          "type": "bytes32"
         }
       ],
-      "name": "saveOutcome",
+      "name": "transmit",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint64",
+          "name": "",
+          "type": "uint64"
+        }
+      ],
+      "name": "usedSeqNr",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     }
   ]

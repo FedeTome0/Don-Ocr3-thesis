@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
     "log"
-	"math/big"
 	"net"
 	"os"
 
@@ -35,31 +34,6 @@ func resolveHostnamePortToIP(addr string) (string, error) {
 	if err != nil { return "", err }
 	if len(ips) == 0 { return "", fmt.Errorf("no IP for host %s", host) }
 	return net.JoinHostPort(ips[0].String(), port), nil
-}
-
-
-// Helper to compute the distance between the proposed vectors
-func ComputeVectorDistance(v1, v2 []*big.Int) *big.Int {
-    // Length Check
-    if len(v1) != len(v2) {
-        // High penalty (return a very big number)
-        maxObj := new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil)
-        return maxObj 
-    }
-
-    totalDist := new(big.Int).SetInt64(0)
-    
-    diff := new(big.Int)
-    absDiff := new(big.Int)
-
-    for i := 0; i < len(v1); i++ {
-        // diff = v1[i] - v2[i]
-        diff.Sub(v1[i], v2[i])
-        absDiff.Abs(diff)
-        totalDist.Add(totalDist, absDiff)
-    }
-
-    return totalDist
 }
 
 // Helper to set the errors in a safe way

@@ -29,12 +29,21 @@ func buildContractConfig(n, f int, seed int64) (ocrtypes.ContractConfig, evmutil
 		return ocrtypes.ContractConfig{}, evmutil.EVMOffchainConfigDigester{}, err
 	}
 
+	// IMPORTANT: Scheduling transmission
+	//transmissionSchedule := make([]int, n)
+	//for i := 0; i < n; i++ {
+	//	transmissionSchedule[i] = 1
+	//}
+
+	// With 7 nodes 
+	transmissionSchedule := []int{1,2,4}
+
 	// Deterministic configuration of OCR3 standards
 	// These values control the speed of the consensus rounds.
 	signers, transmitters, fOut, onchain, ver, offchain, err := ocr3confighelper.ContractSetConfigArgsDeterministic(
 		sha256.Sum256([]byte(fmt.Sprintf("sk|%d", seed))),               //ephemeralSk
 		[16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}, //sharedSecret
-		20*time.Minute, // deltaProgress: Max time for a round leader to drive progress
+		40*time.Second, // deltaProgress: Max time for a round leader to drive progress
 		20*time.Second, // deltaResend: Time before resending messages
 		20*time.Second, // deltaInitial: Initial round timeout
 		10*time.Second, // deltaRound: Timeout for a single round
@@ -42,7 +51,7 @@ func buildContractConfig(n, f int, seed int64) (ocrtypes.ContractConfig, evmutil
 		2*time.Second,  // deltaCertifiedCommitRequest
 		10*time.Second, // deltaStage: Time per stage (Prepare/Commit/Accept)
 		5,              // rMax: Max rounds
-		[]int{n},       // Schedule (S)
+		transmissionSchedule,   // Schedule (S) FIX
 		oracles,        // List of oracle identities
 		[]byte("{}"),   // Reporting Plugin Config (Empty for now)
 		nil,

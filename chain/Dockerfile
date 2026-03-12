@@ -23,10 +23,8 @@ RUN echo '#!/bin/sh' > /start.sh && \
     echo '  echo "Chain not ready, retrying..."' >> /start.sh && \
     echo '  sleep 2' >> /start.sh && \
     echo 'done' >> /start.sh && \
-    echo 'echo "--- DEPLOYING VERIFIER ---"' >> /start.sh && \
-    echo 'npx hardhat run scripts/deploy.js --network localhost || echo "VERIFIER DEPLOY FAILED!"' >> /start.sh && \
-    echo 'echo "--- DEPLOYING ORACLE QUEUE ---"' >> /start.sh && \
-    echo 'npx hardhat run scripts/deploy_queue.js --network localhost || echo "QUEUE DEPLOY FAILED!"' >> /start.sh && \
+    echo 'echo "--- DEPLOYING ALL CONTRACTS ---"' >> /start.sh && \
+    echo 'npx hardhat run scripts/deployContracts.js --network localhost || echo "DEPLOYMENT FAILED!"' >> /start.sh && \
     echo 'echo "--- CHAIN READY ---"' >> /start.sh && \
     echo 'wait' >> /start.sh && \
     chmod +x /start.sh

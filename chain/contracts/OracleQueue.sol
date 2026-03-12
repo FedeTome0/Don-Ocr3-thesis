@@ -2,6 +2,16 @@
 pragma solidity ^0.8.0;
 
 contract OracleQueue {
+    uint256 public queryFee;
+    uint256 public oracleReward;
+
+    constructor(uint256 _queryFee, uint256 _oracleReward){
+        require(_oracleReward <= _queryFee, "The reward cannot exceed the fee");
+        queryFee = _queryFee;
+        oracleReward = _oracleReward;
+        modelCreator = msg.sender;
+    }
+
     // The model creator is the owner of the contract
     address public modelCreator;
 
@@ -14,7 +24,7 @@ contract OracleQueue {
         string ipfsCid;
         address requester;
         uint256 payment;
-        bool isProcessed; // To know if the model creator has already process it
+        bool isProcessed; // To track if the model creator has already processed it
     }
 
     struct OracleJob {
@@ -35,7 +45,8 @@ contract OracleQueue {
         uint256 payment
     );
 
-    // Event 2: Emitted when the Model Creator approves (listned by the oracles)
+    // Event 2: Emitted when the Model Creator approves the job
+    // Listened off-chain by the Oracle Network
     event LogNewJobForOracles(
         uint256 indexed jobId, 
         string ipfsCid
@@ -46,15 +57,12 @@ contract OracleQueue {
         _;
     }
 
-    constructor() {
-        modelCreator = msg.sender; // The one who deploys is the model creator
-    }
-
     // =========================================================
     // PHASE 1: CUSTOMER
     // =========================================================    
     function requestAttribution(string calldata _ipfsCid) external payable {
-        require(msg.value > 0, "Payment required"); // Base check on the payment
+        // Base check on the exact payment
+        require(msg.value == queryFee, "Amount error: must pay the rigth queryFee"); 
 
         uint256 currentReqId = requestCounter;
 
@@ -71,20 +79,20 @@ contract OracleQueue {
     }
 
     // =========================================================
-    // FASE 2: MODEL CREATOR
+    // PHASE 2: MODEL CREATOR
     // =========================================================
     // The Model Creator calls this function after validating the request
     function approveJob(uint256 _requestId) external onlyOwner {
-        // Reads from customer queue
+        // Fetch from the customer queue
         CustomerRequest storage req = customerQueue[_requestId];
         require(!req.isProcessed, "Request already approved");
 
         // Update the state
         req.isProcessed = true;
 
-        // Prepare new id for the Oraclequeue
+        // Prepare new ID for the Oracle queue
         uint256 currentOracleJobId = oracleJobCounter;
-        // Insert in the queue the new ID for the oracleQueue
+        // Insert the approved job into the oracleQueue
         oracleQueue[currentOracleJobId] = OracleJob({
             originalRequestId: _requestId,
             ipfsCid: req.ipfsCid
@@ -95,5 +103,27 @@ contract OracleQueue {
 
         oracleJobCounter++;
     }
+
+    // =========================================================
+    // PHASE 3: PAYMENT
+    // =========================================================
+    address public oracleVerifierAddress;
+
+    // The model creator connects the queue to the Verifier after deployment
+    function setVerifierAddress(address _verifier) external onlyOwner {
+        oracleVerifierAddress = _verifier;
+    }
+
+    // This function is called automatically by the OracleVerifier contract
+    // at the end of "transmit" function to refund the Oracle that executed the job
+    function rewardOracle(address payable _oracle) external {
+        require(msg.sender == oracleVerifierAddress, "Only the Verifier can unlock the funds");
+
+        // If there is a fee, reimburse the Oracle for the spent gas
+        if (oracleReward > 0) {
+            (bool success, ) = _oracle.call{value: oracleReward}("");
+            require(success, "Refund to the oracle failed");
+        }
+    } 
     
 }
