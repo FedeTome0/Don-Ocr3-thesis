@@ -38,8 +38,9 @@ func startChainListener(ctx context.Context, rpcUrl, verifierContractAddress, qu
 		default:
 			// Blocking call that listens for events. Returns only on error.
 			if err := runListener(ctx, wsUrl, verifierContractAddress, queueContractAddr, ipfs); err != nil {
-				log.Printf("Listener crashed: %v. Reconnecting in 5s...", err)
-				time.Sleep(5 * time.Second)
+				log.Printf("Listener crashed: %v. Reconnecting in 0.5s...", err)
+				// Changed from 5 sec to 500ms because of time evaluation
+				time.Sleep(500 * time.Millisecond)
 			}
 		}
 	}
@@ -87,7 +88,7 @@ func runListener(ctx context.Context, wsUrl, verifierContractAddress, queueContr
 	for {
 		// Inactivity timer: force reconnect if no events are received within the window.
 		// This guards against silent WebSocket drops that don't emit a proper close frame.
-		timeout := time.NewTimer(30 * time.Second)
+		timeout := time.NewTimer(20 * time.Second)
 
 		select {
 		case err := <-sub.Err():
@@ -120,7 +121,7 @@ func runListener(ctx context.Context, wsUrl, verifierContractAddress, queueContr
 		case <-timeout.C:
 			// No events received within the timeout window.
 			// The WebSocket connection may have silently dropped — force a reconnect.
-			fmt.Println("[Listener] No events received in 45s. Forcing WebSocket reconnection...")
+			fmt.Println("[Listener] No events received in 60s. Forcing WebSocket reconnection...")
 			return fmt.Errorf("websocket silent drop timeout")
 
 		case <-ctx.Done():
@@ -272,9 +273,9 @@ func processJobAsync(ctx context.Context, jobIdUint uint64, ipfsCid string, ipfs
     // =========================================================================
 	fmt.Printf("[Async Task] Job #%d - Waiting for AI result...\n", jobIdUint)
 
-	// Initialize a ticker to poll the endpoint every 15 seconds.
+	// Initialize a ticker to poll the endpoint every 5 seconds.
     // Deferring Stop() ensures the timer is released from memory when the function exits.
-	ticker := time.NewTicker(15 * time.Second)
+	ticker := time.NewTicker(4 * time.Second) // Timer changed from 15 to 5, is based on the overall time of the att. method
 	defer ticker.Stop()
 
 	var finalResultStrings []string

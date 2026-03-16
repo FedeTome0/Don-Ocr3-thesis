@@ -3,18 +3,11 @@ package main
 import (
 	"context"
 	"os"
-	//"encoding/json"
 	"fmt"
-	//"math"
 	"math/big"
 	"sort"
-	//"strings"
 	"time"
 
-	//"github.com/ethereum/go-ethereum/accounts/abi"
-	//"github.com/ethereum/go-ethereum/common"
-	//"github.com/ethereum/go-ethereum/common/hexutil"
-	//"github.com/ethereum/go-ethereum/rpc" 
 	"github.com/smartcontractkit/libocr/offchainreporting2plus/ocr3types"
 	ocrtypes "github.com/smartcontractkit/libocr/offchainreporting2plus/types"
 	"github.com/smartcontractkit/libocr/quorumhelper"
@@ -23,12 +16,7 @@ import (
 // =============================================================================
 // REPORTING PLUGIN (OCR3 Application Logic)
 // =============================================================================
-type attributionPluginFactory struct {
-	//oracleID 	int
-	//numOracles 	int
-	//rpcUrl		string
-	//contractAddr common.Address 
-}
+type attributionPluginFactory struct {}
 
 // NewReportingPlugin is invoked by libocr during node bootstrap.
 // It initializes the plugin with the protocol limits and injects the 
@@ -36,10 +24,6 @@ type attributionPluginFactory struct {
 func (f attributionPluginFactory) NewReportingPlugin(_ context.Context, cfg ocr3types.ReportingPluginConfig) (ocr3types.ReportingPlugin[struct{}], ocr3types.ReportingPluginInfo, error) {
 	return &attributionPlugin{
 		cfg:      cfg,
-		//oracleIndex: f.oracleID,
-		//numOracles: f.numOracles,
-		//rpcUrl:		f.rpcUrl,
-		//contractAddr: f.contractAddr,
 	}, ocr3types.ReportingPluginInfo{
 		Name: "attribution-matrix-median",
 		Limits: ocr3types.ReportingPluginLimits{
@@ -54,10 +38,6 @@ func (f attributionPluginFactory) NewReportingPlugin(_ context.Context, cfg ocr3
 
 type attributionPlugin struct {
 	cfg      ocr3types.ReportingPluginConfig
-	//oracleIndex int
-	//numOracles int
-	//rpcUrl 		string
-	//contractAddr common.Address
 }
 
 

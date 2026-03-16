@@ -12,11 +12,8 @@ COPY . .
 WORKDIR /app
 RUN go mod tidy
 
-# 3. Compile everything in the package main (due to .)
+# 3. Compile everything in the package main 
 RUN go build -ldflags="-w -s" -o /out/oracle .
-#RUN go build -tags queue -ldflags="-w -s" -o /out/queue main_queue.go shared_types.go
-# AGGIUNTA: Compila anche il tool di verifica!
-# Assumendo che il file sia in cmd/check/main.go
 RUN go build -ldflags="-w -s" -o /out/checker ./check/status/main.go
 RUN go build -ldflags="-w -s" -o /out/manual_checker ./check/manual/main.go
 

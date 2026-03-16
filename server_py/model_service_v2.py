@@ -199,7 +199,7 @@ def attribute():
         JOBS[job_id] = {"status": "queued", "result": None}
 
     print(f"--> [NEW] Queuing Job {job_id}")
-    # QUEUE THE JOB (DO NOT START A THREAD HERE)
+    # QUEUE THE JOB 
     JOB_QUEUE.put((job_id, prompt))
 
     return jsonify({"message": "Job Queued", "job_id": job_id}), 202

@@ -43,10 +43,11 @@ func buildContractConfig(n, f int, seed int64) (ocrtypes.ContractConfig, evmutil
 	signers, transmitters, fOut, onchain, ver, offchain, err := ocr3confighelper.ContractSetConfigArgsDeterministic(
 		sha256.Sum256([]byte(fmt.Sprintf("sk|%d", seed))),               //ephemeralSk
 		[16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}, //sharedSecret
-		40*time.Second, // deltaProgress: Max time for a round leader to drive progress
+		45*time.Second, // deltaProgress: Max time for a round leader to drive progress
 		20*time.Second, // deltaResend: Time before resending messages
-		20*time.Second, // deltaInitial: Initial round timeout
-		10*time.Second, // deltaRound: Timeout for a single round
+		10*time.Second, // deltaInitial: Initial round timeout
+		// Drastically incremented because of time configuration
+		5*time.Second, // deltaRound: Timeout for a single round, 
 		2*time.Second,  // deltaGrace: Grace period for slow nodes
 		2*time.Second,  // deltaCertifiedCommitRequest
 		10*time.Second, // deltaStage: Time per stage (Prepare/Commit/Accept)
@@ -56,7 +57,7 @@ func buildContractConfig(n, f int, seed int64) (ocrtypes.ContractConfig, evmutil
 		[]byte("{}"),   // Reporting Plugin Config (Empty for now)
 		nil,
 		20*time.Second, // MaxDurQuery
-		30*time.Second, // MaxDurObs (Ideally kept short, hence our async architecture)
+		45*time.Second, // MaxDurObs (Ideally kept short, hence our async architecture)
 		20*time.Second, // MaxDurSat
 		90*time.Second, // MaxDurST
 		f,              // Fault tolerance threshold (f)
